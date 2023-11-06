@@ -19,7 +19,7 @@ public class UpgradeManager : MonoBehaviour
 
     void Start()
     {
-        GenerateUpgrades();
+        //GenerateUpgrades();
     }
 
     void Update()

@@ -43,7 +43,8 @@ public class SnakeManager : MonoBehaviour
 
     // A list of the snake parts from head to tail, the Vector2 holds where in the snakeRenderers they are
     private List<Vector2Int> snakePartIndices = new List<Vector2Int>();
-    private List<Vector2Int> snakeBulgeIndices = new List<Vector2Int>();
+    private List<Vector2Int> snakeBulgeLocations = new List<Vector2Int>();
+    private List<int> snakeBulgeIndices = new();
 
     // For now, we start facing/moving to the right (like the google snake game lol)
     private Vector2Int facingDirection = new Vector2Int(1, 0);
@@ -347,6 +348,15 @@ public class SnakeManager : MonoBehaviour
 
     private void RenderSnake()
     {
+        var newList = new List<int>();
+        foreach (var i in snakeBulgeIndices)
+        {
+            var newi = i + 1;
+            if(newi < snakePartIndices.Count - 1) newList.Add(newi);
+        }
+        snakeBulgeIndices = newList;
+        foreach (var z in newList) Debug.Log(z);
+
         foreach (List<SpriteRenderer> listOfSR in snakeRenderers)
         {
             foreach (SpriteRenderer sr in listOfSR)
@@ -357,13 +367,15 @@ public class SnakeManager : MonoBehaviour
 
         int x = 0;
         int y = 0;
+        var counter = 0;
         foreach (List<SnakeSection> snakeSectionList in snakeSections)
         {
             foreach (SnakeSection snakeSection in snakeSectionList)
             {
                 if (snakeSection.direction != Direction.Blank && snakeSection.part != SnakePart.Blank)
                 {
-                    RenderSnakeSection(snakeSection, x, y);
+                    RenderSnakeSection(snakeSection, x, y, counter);
+                    counter++;
                 }
                 y++;
             }
@@ -372,13 +384,17 @@ public class SnakeManager : MonoBehaviour
         }
     }
 
-    private void RenderSnakeSection(SnakeSection section, int x, int y)
+    private void RenderSnakeSection(SnakeSection section, int x, int y, int counter)
     {
         List<SpriteList> list = spritesList;
-        if(snakeBulgeIndices.Contains(new Vector2Int(x, y)))
+        /*if (snakeBulgeIndices.Contains(counter))
+        {
+            list = bulgeSpritesList;
+        }*/
+        if (snakeBulgeLocations.Contains(new Vector2Int(x, y)))
         {
             if (section.part.Equals(SnakePart.Tail))
-                snakeBulgeIndices.Remove(new Vector2Int(x, y));
+                snakeBulgeLocations.Remove(new Vector2Int(x, y));
             else list = bulgeSpritesList;
         }
         snakeRenderers[x][y].sprite = (eating && section.part.Equals(SnakePart.Head)) ? eatAnimation[frame].spritesList[(int)section.direction] : list[(int)section.part].spritesList[(int)section.direction];
@@ -392,7 +408,8 @@ public class SnakeManager : MonoBehaviour
         if (snakePartIndices[0].Equals(fruitPos))
         {
             // If it is, increment score, lengthen snake and RespawnFruit()
-            snakeBulgeIndices.Add(fruitPos);
+            snakeBulgeLocations.Add(fruitPos);
+            snakeBulgeIndices.Add(0);
             SoundManager.Instance.AdvanceMusic();
 
             ResetTimer();
@@ -466,13 +483,13 @@ public class SnakeManager : MonoBehaviour
         {
             SoundManager.Instance.PlaySoundEffect("snakeDie", c);
 
-            Debug.Log($"{s.x},{s.y}");
+            //Debug.Log($"{s.x},{s.y}");
 
             var sr = snakeRenderers[s.x][s.y];
             var p = Instantiate(explodeParticles, sr.transform.position, Quaternion.identity);
             var pMain = p.main;
             pMain.startSize = new ParticleSystem.MinMaxCurve(0.1f, Mathf.Clamp((float)c / snakePartIndices.Count, 0.1f, 1));
-            
+
             sr.material = whiteMat;
             sr.transform.DOScale(Vector2.zero, 0.1f);
             yield return new WaitForSeconds(0.1f);
