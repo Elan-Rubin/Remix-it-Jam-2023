@@ -59,15 +59,16 @@ public class SoundManager : MonoBehaviour
     public void ResetMusic() => StartCoroutine(nameof(ResetMusicCoroutine));
     private IEnumerator ResetMusicCoroutine()
     {
-        Debug.LogError(musicIndex);
+        /*Debug.LogError(musicIndex);
         for (int i = 0; i < musicIndex; i++)
         {
             Debug.LogError("called");
             RetreatMusic();
             yield return new WaitForSeconds(1f);
         }
-        musicIndex = 0;
-        /*for (int i = 1; i < musicIndex; i++)
+        musicIndex = 0;*/
+        yield return null;
+        for (int i = 1; i < musicIndex; i++)
         {
             musicLayerSources[i].DOFade(1, 1).OnComplete(() =>
             {
@@ -75,7 +76,7 @@ public class SoundManager : MonoBehaviour
             });
         }
         musicIndex = 0;
-        musicLayerSources[musicIndex].DOFade(1, 1);*/
+        musicLayerSources[musicIndex].DOFade(1, 1);
     }
 
     public void PlayClickSoundEffect() => PlaySoundEffect("click");
