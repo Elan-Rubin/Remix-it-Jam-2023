@@ -24,8 +24,11 @@ public class SnakeManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private Material whiteMat;
     [SerializeField] private ParticleSystem explodeParticles;
+    [SerializeField] private SpriteRenderer backgroundSR;
+    [SerializeField] private GameObject foodParticles;
 
     [Header("Sprites")]
+    [SerializeField] private List<Sprite> backgroundList;
     // Outside list is parts, inside list is directions
     // HeadN, HeadE, HeadS, HeadW
     // MiddleN, MiddleE, etc
@@ -84,11 +87,19 @@ public class SnakeManager : MonoBehaviour
     private void StartAnimation() => StartCoroutine(nameof(StartAnimationCoroutine));
     private IEnumerator StartAnimationCoroutine()
     {
-        yield return null;
+        StartCoroutine(nameof(StartBackgroundAnimation));
         yield return new WaitForSeconds(1f);
 
         // Move the snake every moveInterval seconds
         InvokeRepeating("TryMoveSnake", 0, snakeMoveInterval);
+    }
+    private IEnumerator StartBackgroundAnimation()
+    {
+        foreach(var s in backgroundList)
+        {
+            backgroundSR.sprite = s;
+            yield return new WaitForSeconds(0.1f);
+        }
     }
 
     private void FillArrays()
@@ -348,14 +359,33 @@ public class SnakeManager : MonoBehaviour
 
     private void RenderSnake()
     {
-        var newList = new List<int>();
+        /*var newList = new List<int>();
         foreach (var i in snakeBulgeIndices)
         {
-            var newi = i + 1;
-            if(newi < snakePartIndices.Count - 1) newList.Add(newi);
+            if(i+1 < snakePartIndices.Count - 1) newList.Add(i + 1);
         }
-        snakeBulgeIndices = newList;
-        foreach (var z in newList) Debug.Log(z);
+        snakeBulgeIndices = newList;*/
+        for (int i = 0; i < snakeBulgeIndices.Count; i++)
+        {
+            var val = snakeBulgeIndices[i];
+            if (val + 1 < snakePartIndices.Count - 1) snakeBulgeIndices[i] = val;
+            else snakePartIndices.RemoveAt(i);
+        }
+        for (int i = 0; i < snakeBulgeLocations.Count; i++)
+        {
+
+        }
+
+        /*var newBulgeList = new List<Vector2Int>();
+        foreach (var i in snakeBulgeIndices)
+            newBulgeList.Add(snakePartIndices[i]);
+        snakeBulgeLocations = newBulgeList;*/
+
+        //snakeBulgeIndices = newList;
+        /*foreach (var i in snakeBulgeIndices)
+            Debug.Log($"<color=blue>{i}</color>");*/
+
+        //foreach (var z in newList) Debug.Log(z);
 
         foreach (List<SpriteRenderer> listOfSR in snakeRenderers)
         {
@@ -375,6 +405,7 @@ public class SnakeManager : MonoBehaviour
                 if (snakeSection.direction != Direction.Blank && snakeSection.part != SnakePart.Blank)
                 {
                     RenderSnakeSection(snakeSection, x, y, counter);
+                    Debug.Log($"<color=green>{counter}</color>");
                     counter++;
                 }
                 y++;
@@ -390,6 +421,9 @@ public class SnakeManager : MonoBehaviour
         /*if (snakeBulgeIndices.Contains(counter))
         {
             list = bulgeSpritesList;
+            if (section.part.Equals(SnakePart.Tail))
+                snakeBulgeIndices.Remove(counter);
+            else list = bulgeSpritesList;
         }*/
         if (snakeBulgeLocations.Contains(new Vector2Int(x, y)))
         {
@@ -397,6 +431,7 @@ public class SnakeManager : MonoBehaviour
                 snakeBulgeLocations.Remove(new Vector2Int(x, y));
             else list = bulgeSpritesList;
         }
+
         snakeRenderers[x][y].sprite = (eating && section.part.Equals(SnakePart.Head)) ? eatAnimation[frame].spritesList[(int)section.direction] : list[(int)section.part].spritesList[(int)section.direction];
         snakeRenderers[x][y].enabled = true;
     }
@@ -411,6 +446,9 @@ public class SnakeManager : MonoBehaviour
             snakeBulgeLocations.Add(fruitPos);
             snakeBulgeIndices.Add(0);
             SoundManager.Instance.AdvanceMusic();
+
+            var p = Instantiate(foodParticles, (Vector3)(Vector2)fruitPos, Quaternion.identity);
+            Destroy(p, 1f);
 
             ResetTimer();
             score++;

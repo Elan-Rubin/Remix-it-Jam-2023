@@ -2155,6 +2155,19 @@ MonoBehaviour:
   timerText: {fileID: 1448936551}
   whiteMat: {fileID: 2100000, guid: ec3a4e311d580c540b2b9e05b7705127, type: 2}
   explodeParticles: {fileID: 238071390088166700, guid: e8ceab2e565dcb44894a0195e5a5b2a1, type: 3}
+  backgroundSR: {fileID: 1542236098}
+  backgroundList:
+  - {fileID: -1378319078, guid: 58e67c11b0722f14ca51cabb76d4c359, type: 3}
+  - {fileID: 1842601603, guid: 58e67c11b0722f14ca51cabb76d4c359, type: 3}
+  - {fileID: -1920968479, guid: 58e67c11b0722f14ca51cabb76d4c359, type: 3}
+  - {fileID: 1693133817, guid: 58e67c11b0722f14ca51cabb76d4c359, type: 3}
+  - {fileID: -1886648532, guid: 58e67c11b0722f14ca51cabb76d4c359, type: 3}
+  - {fileID: -124904999, guid: 58e67c11b0722f14ca51cabb76d4c359, type: 3}
+  - {fileID: -1519583979, guid: 58e67c11b0722f14ca51cabb76d4c359, type: 3}
+  - {fileID: 1148705880, guid: 58e67c11b0722f14ca51cabb76d4c359, type: 3}
+  - {fileID: 1999409354, guid: 58e67c11b0722f14ca51cabb76d4c359, type: 3}
+  - {fileID: 253221548, guid: 58e67c11b0722f14ca51cabb76d4c359, type: 3}
+  - {fileID: 21300000, guid: 28efd8373329df642924d5ea8b728faf, type: 3}
   spritesList:
   - name: head
     spritesList:
@@ -2188,7 +2201,11 @@ MonoBehaviour:
     - {fileID: -405854755, guid: 50ff3bb8a03354f9f9dcddd1599059c5, type: 3}
   bulgeSpritesList:
   - name: head
-    spritesList: []
+    spritesList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
   - name: body
     spritesList:
     - {fileID: -2016620322, guid: 032225b6df562504991d4b9de7430360, type: 3}
@@ -2202,7 +2219,11 @@ MonoBehaviour:
     - {fileID: 1208875948, guid: 032225b6df562504991d4b9de7430360, type: 3}
     - {fileID: -1218595968, guid: 032225b6df562504991d4b9de7430360, type: 3}
   - name: tail
-    spritesList: []
+    spritesList:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
   - name: turn2
     spritesList:
     - {fileID: -1218595968, guid: 032225b6df562504991d4b9de7430360, type: 3}
