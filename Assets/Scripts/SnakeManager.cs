@@ -13,6 +13,7 @@ public class SnakeManager : MonoBehaviour
 {
     [Header("Variables")]
     [SerializeField] private float snakeMoveInterval = 0.5f;
+    private float modifiedInterval;
     [SerializeField] private int tileCount = 10; // 10 means a 10x10 world
     [SerializeField] private float tileSize = 1f;
     [SerializeField] private float scaleFactor = 1.1f;
@@ -28,9 +29,11 @@ public class SnakeManager : MonoBehaviour
     [SerializeField] private ParticleSystem explodeParticles;
     [SerializeField] private SpriteRenderer backgroundSR;
     [SerializeField] private GameObject foodParticles;
-    [SerializeField] private GameObject restartButton;
-    private int round, highscore;
+    [SerializeField] private GameObject continueButton;
+    private int round, score, highscore;
+    private int dUpgrade, eUpgrade, wUpgrade;
     [SerializeField] private TextMeshProUGUI roundText, scoreText, highscoreText;
+    [SerializeField] private Button dUpgradeButton, eUpgradeButton, wUpgradeButton;
 
     [Header("Sprites")]
     [SerializeField] private List<Sprite> backgroundList;
@@ -60,8 +63,6 @@ public class SnakeManager : MonoBehaviour
     // If the player put in an input to turn but didn't actually turn yet (due to move only being updated every so often)
     private bool tryingToTurn;
 
-    // How much fruit the player has collected
-    int score = 0;
     private Vector2Int fruitPos = new Vector2Int(7, 5);
     // The square the tail of the snake just left, which will be used if a fruit is eaten
     private Vector2Int lastLeftSquare;
@@ -77,13 +78,21 @@ public class SnakeManager : MonoBehaviour
 
     void Start()
     {
+        backgroundList = backgroundList.OrderBy(x => Random.value).ToList();
+        modifiedInterval = snakeMoveInterval / 2f;
+
+        roundText.gameObject.SetActive(false);
+        scoreText.gameObject.SetActive(false);
+        highscoreText.gameObject.SetActive(false);
+
         if (PlayerPrefs.HasKey("highscore")) highscore = PlayerPrefs.GetInt("highscore");
         else highscore = 0;
-        if (PlayerPrefs.HasKey("round")) round = PlayerPrefs.GetInt("round");
+        if (PlayerPrefs.HasKey("round")) round = PlayerPrefs.GetInt("round") + 1;
         else round = 0;
-        roundText.text = $"round: {round}";
+        roundText.text = $"round: {round:D3}";
+        highscoreText.text = $"highscore: {highscore:D3}";
 
-        restartButton.SetActive(false);
+        continueButton.SetActive(false);
 
         // Fill up arrays with Blank values
         FillArrays();
@@ -94,7 +103,7 @@ public class SnakeManager : MonoBehaviour
         snakePartIndices.Add(new Vector2Int(1, 5));
         snakePartIndices.Add(new Vector2Int(0, 5));
     }
-    
+
     public void StartAnimation() => StartCoroutine(nameof(StartAnimationCoroutine));
     private IEnumerator StartAnimationCoroutine()
     {
@@ -103,10 +112,17 @@ public class SnakeManager : MonoBehaviour
 
         // Move the snake every moveInterval seconds
         InvokeRepeating("TryMoveSnake", 0, snakeMoveInterval);
+
+        yield return new WaitForSeconds(0.1f);
+        roundText.gameObject.SetActive(true);
+        yield return new WaitForSeconds(0.1f);
+        scoreText.gameObject.SetActive(true);
+        yield return new WaitForSeconds(0.1f);
+        highscoreText.gameObject.SetActive(true);
     }
     private IEnumerator StartBackgroundAnimation()
     {
-        foreach(var s in backgroundList)
+        foreach (var s in backgroundList)
         {
             backgroundSR.sprite = s;
             yield return new WaitForSeconds(0.1f);
@@ -156,8 +172,10 @@ public class SnakeManager : MonoBehaviour
         GetInput();
         if (Input.GetKeyDown(KeyCode.R)) RestartLevel();
     }
-    public void RestartLevel()
+    public void RestartLevel() => StartCoroutine(nameof(RestartLevelCoroutine));
+    private IEnumerator RestartLevelCoroutine()
     {
+        yield return new WaitForSeconds(0.1f);
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
@@ -243,7 +261,6 @@ public class SnakeManager : MonoBehaviour
 
     private void MoveSnake()
     {
-        highscoreText.text = $"highscore: {highscore:D5}";
 
         UpdateTimer();
 
@@ -472,7 +489,8 @@ public class SnakeManager : MonoBehaviour
             score++;
             if (score > PlayerPrefs.GetInt("highscore")) PlayerPrefs.SetInt("highscore", score);
 
-            scoreText.text = $"score: {score:D5}";
+            scoreText.text = $"score: {score:D3}";
+            highscoreText.text = $"highscore: {highscore:D3}";
 
             snakePartIndices.Add(lastLeftSquare);
             RespawnFruit();
@@ -525,6 +543,8 @@ public class SnakeManager : MonoBehaviour
 
     private void GameOver()
     {
+        continueButton.SetActive(true);
+
         SoundManager.Instance.ResetMusic();
 
         GameOverTimer();
@@ -578,6 +598,11 @@ public class SnakeManager : MonoBehaviour
         var image = timerSlider.fillRect.GetComponent<Image>();
         var prevColor = image.color;
         image.DOColor(Color.white, snakeMoveInterval / 2f).OnComplete(() => image.DOColor(prevColor, snakeMoveInterval / 2f));
+    }
+
+    public void GoToUpgrades()
+    {
+
     }
 }
 
