@@ -25,7 +25,7 @@ public class WobblyText : MonoBehaviour
             for (int j = 0; j < 4; ++j)
             {
                 var orig = verts[charInfo.vertexIndex + j];
-                verts[charInfo.vertexIndex + j] = orig + new Vector3(0, Mathf.Sin(Time.time * 2f + orig.x * 1f) * multiplier, 0);
+                verts[charInfo.vertexIndex + j] = orig + new Vector3(0, Mathf.Sin(Time.time * 10f + orig.x * 10f) * multiplier, 0);
             }
         }
         for (int i = 0; i < textInfo.meshInfo.Length; ++i)

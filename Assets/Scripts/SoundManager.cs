@@ -51,6 +51,8 @@ public class SoundManager : MonoBehaviour
     {
         var tempIndex = musicIndex + (direction ? 1 : -1);
         if (direction && musicIndex == musicLayers.Count - 1) return;
+        else if (musicIndex < 1) return;
+
         musicLayerSources[musicIndex].DOFade(0, 1);
         musicIndex = tempIndex;
         //musicIndex = direction ? musicIndex++ : musicIndex--;
@@ -67,13 +69,15 @@ public class SoundManager : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
         musicIndex = 0;*/
+
         yield return null;
         for (int i = 1; i < musicIndex; i++)
         {
-            musicLayerSources[i].DOFade(1, 1).OnComplete(() =>
+            musicLayerSources[i].DOFade(0, 1);
+            /*musicLayerSources[i].DOFade(1, 1).OnComplete(() =>
             {
                 musicLayerSources[i].DOFade(0, 1);
-            });
+            });*/
         }
         musicIndex = 0;
         musicLayerSources[musicIndex].DOFade(1, 1);

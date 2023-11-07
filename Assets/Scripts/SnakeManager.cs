@@ -6,6 +6,8 @@ using DG.Tweening;
 using UnityEngine.UI;
 using TMPro;
 using System.IO;
+using Unity.VisualScripting;
+using UnityEngine.SceneManagement;
 
 public class SnakeManager : MonoBehaviour
 {
@@ -26,6 +28,9 @@ public class SnakeManager : MonoBehaviour
     [SerializeField] private ParticleSystem explodeParticles;
     [SerializeField] private SpriteRenderer backgroundSR;
     [SerializeField] private GameObject foodParticles;
+    [SerializeField] private GameObject restartButton;
+    private int round, highscore;
+    [SerializeField] private TextMeshProUGUI roundText, scoreText, highscoreText;
 
     [Header("Sprites")]
     [SerializeField] private List<Sprite> backgroundList;
@@ -40,13 +45,13 @@ public class SnakeManager : MonoBehaviour
     public static SnakeManager Instance { get { return instance; } }
 
     // The list of actual sprite renderers in the level
-    private List<List<SpriteRenderer>> snakeRenderers = new List<List<SpriteRenderer>>();
+    private List<List<SpriteRenderer>> snakeRenderers = new();
     // The list of where snake sections are in the world
-    private List<List<SnakeSection>> snakeSections = new List<List<SnakeSection>>();
+    private List<List<SnakeSection>> snakeSections = new();
 
     // A list of the snake parts from head to tail, the Vector2 holds where in the snakeRenderers they are
-    private List<Vector2Int> snakePartIndices = new List<Vector2Int>();
-    private List<Vector2Int> snakeBulgeLocations = new List<Vector2Int>();
+    private List<Vector2Int> snakePartIndices = new();
+    private List<Vector2Int> snakeBulgeLocations = new();
     private List<int> snakeBulgeIndices = new();
 
     // For now, we start facing/moving to the right (like the google snake game lol)
@@ -72,6 +77,14 @@ public class SnakeManager : MonoBehaviour
 
     void Start()
     {
+        if (PlayerPrefs.HasKey("highscore")) highscore = PlayerPrefs.GetInt("highscore");
+        else highscore = 0;
+        if (PlayerPrefs.HasKey("round")) round = PlayerPrefs.GetInt("round");
+        else round = 0;
+        roundText.text = $"round: {round}";
+
+        restartButton.SetActive(false);
+
         // Fill up arrays with Blank values
         FillArrays();
         // Fill the world with empty sprite renderers
@@ -80,11 +93,9 @@ public class SnakeManager : MonoBehaviour
 
         snakePartIndices.Add(new Vector2Int(1, 5));
         snakePartIndices.Add(new Vector2Int(0, 5));
-
-        StartAnimation();
     }
-
-    private void StartAnimation() => StartCoroutine(nameof(StartAnimationCoroutine));
+    
+    public void StartAnimation() => StartCoroutine(nameof(StartAnimationCoroutine));
     private IEnumerator StartAnimationCoroutine()
     {
         StartCoroutine(nameof(StartBackgroundAnimation));
@@ -143,6 +154,11 @@ public class SnakeManager : MonoBehaviour
     private void Update()
     {
         GetInput();
+        if (Input.GetKeyDown(KeyCode.R)) RestartLevel();
+    }
+    public void RestartLevel()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     private void TryMoveSnake()
@@ -227,6 +243,8 @@ public class SnakeManager : MonoBehaviour
 
     private void MoveSnake()
     {
+        highscoreText.text = $"highscore: {highscore:D5}";
+
         UpdateTimer();
 
         if (eating) frame++;
@@ -447,11 +465,15 @@ public class SnakeManager : MonoBehaviour
             snakeBulgeIndices.Add(0);
             SoundManager.Instance.AdvanceMusic();
 
-            var p = Instantiate(foodParticles, (Vector3)(Vector2)fruitPos, Quaternion.identity);
+            var p = Instantiate(foodParticles, snakeRenderers[fruitPos.x][fruitPos.y].transform.position, Quaternion.identity);
             Destroy(p, 1f);
 
             ResetTimer();
             score++;
+            if (score > PlayerPrefs.GetInt("highscore")) PlayerPrefs.SetInt("highscore", score);
+
+            scoreText.text = $"score: {score:D5}";
+
             snakePartIndices.Add(lastLeftSquare);
             RespawnFruit();
         }
