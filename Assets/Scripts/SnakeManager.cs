@@ -22,7 +22,7 @@ public class SnakeManager : MonoBehaviour
     [Header("Refs")]
     [SerializeField] private GameObject worldHolder;
     [SerializeField] private GameObject tilePrefab;
-    [SerializeField] private GameObject fruit;
+    [SerializeField] private GameObject fruit1, fruit2;
     [SerializeField] private Slider timerSlider;
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private Material whiteMat;
@@ -34,6 +34,7 @@ public class SnakeManager : MonoBehaviour
     private int dUpgrade, eUpgrade, wUpgrade;
     [SerializeField] private TextMeshProUGUI roundText, scoreText, highscoreText;
     [SerializeField] private Button dUpgradeButton, eUpgradeButton, wUpgradeButton;
+    [SerializeField] private Toggle dUpgradeToggle, eUpgradeToggle, wUpgradeToggle;
 
     [Header("Sprites")]
     [SerializeField] private List<Sprite> backgroundList;
@@ -63,7 +64,8 @@ public class SnakeManager : MonoBehaviour
     // If the player put in an input to turn but didn't actually turn yet (due to move only being updated every so often)
     private bool tryingToTurn;
 
-    private Vector2Int fruitPos = new Vector2Int(7, 5);
+    private Vector2Int fruit1Pos = new Vector2Int(7, 5);
+    private Vector2Int fruit2Pos = new Vector2Int(8, 5);
     // The square the tail of the snake just left, which will be used if a fruit is eaten
     private Vector2Int lastLeftSquare;
     bool eating;
@@ -78,6 +80,9 @@ public class SnakeManager : MonoBehaviour
 
     void Start()
     {
+        timer = PlayerPrefs.GetInt("eupgrade") == 1 ? 40 : 20;
+        timerSlider.maxValue = timer;
+
         backgroundList = backgroundList.OrderBy(x => Random.value).ToList();
         modifiedInterval = snakeMoveInterval / 2f;
 
@@ -86,10 +91,26 @@ public class SnakeManager : MonoBehaviour
         highscoreText.gameObject.SetActive(false);
 
         if (PlayerPrefs.HasKey("highscore")) highscore = PlayerPrefs.GetInt("highscore");
-        else highscore = 0;
+        else PlayerPrefs.SetInt("highscore", highscore = 0);
         if (PlayerPrefs.HasKey("round")) round = PlayerPrefs.GetInt("round") + 1;
-        else round = 0;
-        roundText.text = $"round: {round:D3}";
+        else PlayerPrefs.SetInt("round", round = 0);
+
+        if (PlayerPrefs.HasKey("dupgrade")) dUpgrade = PlayerPrefs.GetInt("dupgrade");
+        else PlayerPrefs.SetInt("dupgrade", dUpgrade = 0);
+
+        if (PlayerPrefs.HasKey("eupgrade")) dUpgrade = PlayerPrefs.GetInt("eupgrade");
+        else PlayerPrefs.SetInt("eupgrade", dUpgrade = 0);
+
+        if (PlayerPrefs.HasKey("wupgrade")) dUpgrade = PlayerPrefs.GetInt("wupgrade");
+        else PlayerPrefs.SetInt("wupgrade", dUpgrade = 0);
+
+        dUpgradeToggle.isOn = PlayerPrefs.GetInt("dupgrade") == 1;
+        eUpgradeToggle.isOn = PlayerPrefs.GetInt("eupgrade") == 1;
+        wUpgradeToggle.isOn = PlayerPrefs.GetInt("wupgrade") == 1;
+
+
+
+        roundText.text = $"attempt #{round:D3}";
         highscoreText.text = $"highscore: {highscore:D3}";
 
         continueButton.SetActive(false);
@@ -475,14 +496,14 @@ public class SnakeManager : MonoBehaviour
     private void CheckFruit()
     {
         // Check if the heads square is the same as the fruit square
-        if (snakePartIndices[0].Equals(fruitPos))
+        if (snakePartIndices[0].Equals(fruit1Pos))
         {
             // If it is, increment score, lengthen snake and RespawnFruit()
-            snakeBulgeLocations.Add(fruitPos);
+            snakeBulgeLocations.Add(fruit1Pos);
             snakeBulgeIndices.Add(0);
             SoundManager.Instance.AdvanceMusic();
 
-            var p = Instantiate(foodParticles, snakeRenderers[fruitPos.x][fruitPos.y].transform.position, Quaternion.identity);
+            var p = Instantiate(foodParticles, snakeRenderers[fruit1Pos.x][fruit1Pos.y].transform.position, Quaternion.identity);
             Destroy(p, 1f);
 
             ResetTimer();
@@ -493,11 +514,32 @@ public class SnakeManager : MonoBehaviour
             highscoreText.text = $"highscore: {highscore:D3}";
 
             snakePartIndices.Add(lastLeftSquare);
-            RespawnFruit();
+            RespawnFruit1();
+        }
+
+        if(PlayerPrefs.GetInt("dupgrade") == 1 && snakePartIndices[0].Equals(fruit2Pos))
+        {
+            // If it is, increment score, lengthen snake and RespawnFruit()
+            snakeBulgeLocations.Add(fruit2Pos);
+            snakeBulgeIndices.Add(0);
+            SoundManager.Instance.AdvanceMusic();
+
+            var p = Instantiate(foodParticles, snakeRenderers[fruit1Pos.x][fruit1Pos.y].transform.position, Quaternion.identity);
+            Destroy(p, 1f);
+
+            ResetTimer();
+            score++;
+            if (score > PlayerPrefs.GetInt("highscore")) PlayerPrefs.SetInt("highscore", score);
+
+            scoreText.text = $"score: {score:D3}";
+            highscoreText.text = $"highscore: {highscore:D3}";
+
+            snakePartIndices.Add(lastLeftSquare);
+            RespawnFruit2();
         }
     }
 
-    private void RespawnFruit()
+    private void RespawnFruit1()
     {
         // Collect a list of the empty squares
         // Randomly select one of them
@@ -525,16 +567,52 @@ public class SnakeManager : MonoBehaviour
         }
 
         int randSquare = Random.Range(0, emptySquares.Count - 1);
-        fruitPos = emptySquares[randSquare];
-        fruit.SetActive(false);
-        fruit.SetActive(true);
+        fruit1Pos = emptySquares[randSquare];
+        fruit1.SetActive(false);
+        fruit1.SetActive(true);
+    }
+
+    private void RespawnFruit2()
+    {
+        // Collect a list of the empty squares
+        // Randomly select one of them
+        // Show the fruit there
+        SoundManager.Instance.PlaySoundEffect("snakeEat");
+        frame = 0;
+        eating = true;
+
+        int x = 0;
+        int y = 0;
+        List<Vector2Int> emptySquares = new List<Vector2Int>();
+
+        foreach (List<SpriteRenderer> srList in snakeRenderers)
+        {
+            foreach (SpriteRenderer sr in srList)
+            {
+                if (!sr.enabled)
+                {
+                    emptySquares.Add(new Vector2Int(x, y));
+                }
+                y++;
+            }
+            y = 0;
+            x++;
+        }
+
+        int randSquare = Random.Range(0, emptySquares.Count - 1);
+        fruit2Pos = emptySquares[randSquare];
+        fruit2.SetActive(false);
+        fruit2.SetActive(true);
     }
 
     private void RenderFruit()
     {
         //snakeRenderers[fruitPos.x][fruitPos.y].sprite = fruitSprite;
         //snakeRenderers[fruitPos.x][fruitPos.y].enabled = true;
-        fruit.transform.position = snakeRenderers[fruitPos.x][fruitPos.y].transform.position;
+        fruit1.transform.position = snakeRenderers[fruit1Pos.x][fruit1Pos.y].transform.position;
+        Debug.Log(PlayerPrefs.GetInt("dupgrade"));
+        if(PlayerPrefs.GetInt("dupgrade") == 1) fruit2.transform.position = snakeRenderers[fruit2Pos.x][fruit2Pos.y].transform.position;
+
         //var anim = fruit.GetComponent<Animator>();
         //anim.Play()
         //fruit.SetActive(false);
@@ -594,7 +672,7 @@ public class SnakeManager : MonoBehaviour
 
     private void ResetTimer()
     {
-        timer = 20;
+        timer = PlayerPrefs.GetInt("eupgrade") == 1 ? 40 : 20;
         var image = timerSlider.fillRect.GetComponent<Image>();
         var prevColor = image.color;
         image.DOColor(Color.white, snakeMoveInterval / 2f).OnComplete(() => image.DOColor(prevColor, snakeMoveInterval / 2f));
@@ -602,7 +680,12 @@ public class SnakeManager : MonoBehaviour
 
     public void GoToUpgrades()
     {
+        Camera.main.transform.DOMove(Camera.main.transform.position + (Vector3)Vector2.left * 30f, 1f);
+    }
 
+    public void ToggleUpgrade(string name)
+    {
+        PlayerPrefs.SetInt(name, (PlayerPrefs.GetInt(name) == 1) ? 0 : 1);
     }
 }
 
